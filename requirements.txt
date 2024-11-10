@@ -6,6 +6,5 @@ seaborn
 pandas
 scipy
 japanize-matplotlib
-pytensor
-pymc
 arviz
+
