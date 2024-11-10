@@ -61,17 +61,24 @@ if st.session_state.authenticated:
     
     # 訪問者数とCV数の入力
     st.sidebar.subheader('データ入力')
+    
+    # Aのデータ入力
     col3, col4 = st.sidebar.columns(2)
     with col3:
-        visitors_a = st.number_input('Aの訪問者数', value=1000, min_value=1)
-        conversion_a = st.number_input('AのCV数', value=50, min_value=0)
-        cvr_a = conversion_a / visitors_a
-        st.sidebar.markdown(f'AのCVR :  **{"{:.1%}".format(cvr_a)}**')
+        visitors_a = st.number_input('Aの訪問者数', value=1000)
     with col4:
-        visitors_b = st.number_input('Bの訪問者数', value=1000, min_value=1)
-        conversion_b = st.number_input('BのCV数', value=55, min_value=0)
-        cvr_b = conversion_b / visitors_b
-        st.sidebar.markdown(f'BのCVR :  **{"{:.1%}".format(cvr_b)}**')
+        conversion_a = st.number_input('AのCV数', value=50)
+    cvr_a = conversion_a / visitors_a
+    st.sidebar.markdown(f'AのCVR :  **{"{:.1%}".format(cvr_a)}**')
+    
+    # Bのデータ入力
+    col5, col6 = st.sidebar.columns(2)
+    with col5:
+        visitors_b = st.number_input('Bの訪問者数', value=1000)
+    with col6:
+        conversion_b = st.number_input('BのCV数', value=50)
+    cvr_b = conversion_b / visitors_b
+    st.sidebar.markdown(f'BのCVR :  **{"{:.1%}".format(cvr_b)}**')
     
     # 事前分布の設定
     st.sidebar.subheader('モデル設定')
@@ -82,16 +89,16 @@ if st.session_state.authenticated:
     
     # 事前分布のパラメータ設定
     if prior_dist == 'ベータ分布(Beta)':
-        col5, col6 = st.sidebar.columns(2)
-        with col5:
+        col7, col8 = st.sidebar.columns(2)
+        with col7:
             alpha_prior = st.number_input('α (形状パラメータ1)', value=1.0, min_value=0.1)
-        with col6:
+        with col8:
             beta_prior = st.number_input('β (形状パラメータ2)', value=1.0, min_value=0.1)
     elif prior_dist == '正規分布(Normal)':
-        col5, col6 = st.sidebar.columns(2)
-        with col5:
+        col7, col8 = st.sidebar.columns(2)
+        with col7:
             mu_prior = st.number_input('μ (平均)', value=0.0)
-        with col6:
+        with col8:
             sigma_prior = st.number_input('σ (標準偏差)', value=1.0, min_value=0.1)
     
     # MCMCの設定
@@ -104,12 +111,12 @@ if st.session_state.authenticated:
     st.header('1. テスト概要')
     
     # 基本統計量の表示
-    col7, col8, col9 = st.columns(3)
-    with col7:
-        st.metric("A: CVR", f"{cvr_a:.2%}")
-    with col8:
-        st.metric("B: CVR", f"{cvr_b:.2%}")
+    col9, col10, col11 = st.columns(3)
     with col9:
+        st.metric("A: CVR", f"{cvr_a:.2%}")
+    with col10:
+        st.metric("B: CVR", f"{cvr_b:.2%}")
+    with col11:
         relative_diff = (cvr_b - cvr_a) / cvr_a
         st.metric("相対的な差", f"{relative_diff:.2%}")
     
@@ -146,14 +153,14 @@ if st.session_state.authenticated:
         trace, model = run_bayesian_model()
     
     # 結果の可視化
-    col10, col11 = st.columns(2)
-    with col10:
+    col12, col13 = st.columns(2)
+    with col12:
         st.subheader('変換率の事後分布')
         fig1, ax1 = plt.subplots(figsize=(10, 6))
         az.plot_posterior(trace, var_names=['p_a', 'p_b'], ax=ax1)
         plt.title('ConversionRate Posterior Distributions')
         st.pyplot(fig1)
-    with col11:
+    with col13:
         st.subheader('差分の事後分布')
         fig2, ax2 = plt.subplots(figsize=(10, 6))
         az.plot_posterior(trace, var_names=['diff'], ax=ax2)
@@ -170,15 +177,16 @@ if st.session_state.authenticated:
     st.header('3. 統計的まとめ')
     prob_b_better = (trace.posterior['p_b'] > trace.posterior['p_a']).mean().item()
     expected_lift = trace.posterior['lift'].mean().item()
-    col12, col13 = st.columns(2)
-    with col12:
+    col14, col15 = st.columns(2)
+    with col14:
         st.metric("Bが優れている確率", f"{prob_b_better:.1%}", help="BのCVRがAのCVRを上回る確率")
-    with col13:
+    with col15:
         st.metric("期待されるリフト", f"{expected_lift:.1%}", help="BがAに対して期待される相対的な改善率")
     
     st.subheader('パラメータの要約統計量')
     summary = az.summary(trace, var_names=['p_a', 'p_b', 'diff', 'lift'])
     st.dataframe(summary)
+
 
 
 else:
