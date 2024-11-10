@@ -53,7 +53,11 @@ if st.session_state.authenticated:
     with col2:
         end_date = st.date_input("終了日", value=datetime.today())
     
-    # データ入力
+    # URL入力欄の追加
+    url_link = st.sidebar.text_area("関連URL（必要であれば）", placeholder="URLを記載してください")
+    st.sidebar.markdown("-----------------")
+    
+    # 訪問者数とCV数の入力
     st.sidebar.subheader('データ入力')
     col3, col4 = st.sidebar.columns(2)
     with col3:
@@ -66,6 +70,75 @@ if st.session_state.authenticated:
         conversion_b = st.number_input('BのCV数', value=55, min_value=0)
         cvr_b = conversion_b / visitors_b
         st.sidebar.markdown(f'BのCVR :  **{"{:.1%}".format(cvr_b)}**')
+    
+    # テーブルのスタイル設定とレンダリング
+    days_difference = (end_date - start_date).days
+    
+    st.markdown(rf'''
+        <style>
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }}
+        th, td {{
+            padding: 10px;
+            text-align: center;
+            border: 1px solid black;
+            font-size: 18px;
+        }}
+        th:nth-child(1), td:nth-child(1) {{
+            width: 15%;
+        }}
+        th:nth-child(2), td:nth-child(2),
+        th:nth-child(3), td:nth-child(3),
+        th:nth-child(4), td:nth-child(4) {{
+            width: 15%;
+        }}
+        th:nth-child(5), th:nth-child(6), th:nth-child(7) {{
+            width: 13%;
+            font-size: 14px
+        }}
+        td:nth-child(5), td:nth-child(6), td:nth-child(7) {{
+            width: 13%;
+        }}
+        </style>
+    
+        <table>
+          <tr>
+            <th>対象</th>
+            <th>訪問者数</th>
+            <th>CV数</th>
+            <th>CVR</th>
+            <th>CVR改善率（B/A）</th>
+            <th>増加差分</th>
+            <th>月間換算</th>
+          </tr>
+          <tr>
+            <td>A</td>
+            <td>{visitors_a}</td>
+            <td>{conversion_a}</td>
+            <td>{"{:.1%}".format(cvr_a)}</td>
+            <td rowspan="2">{"{:.1%}".format(cvr_b / cvr_a)}</td>
+            <td rowspan="2">{"{:.1f}".format((cvr_b - cvr_a) * (visitors_a + visitors_b))}</td>
+            <td rowspan="2">{"{:.1f}".format((cvr_b - cvr_a) * (visitors_a + visitors_b) / days_difference * 30) if days_difference > 0 else "N/A"}</td>
+          </tr>
+          <tr>
+            <td>B</td>
+            <td>{visitors_b}</td>
+            <td>{conversion_b}</td>
+            <td>{"{:.1%}".format(cvr_b)}</td>
+          </tr>
+        </table>
+        ''', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="font-size: 14px; text-align: right;">
+        <div style="display: inline-block; text-align: left; width: 55%;">※増加差分 = （BのCVR - AのCVR）×（A+Bの総訪問者数）</div><br>
+        <div style="display: inline-block; text-align: left; width: 55%;">※月間換算 = （増加差分）/（テスト日数）×（30日）</div>
+    </div>
+    """, unsafe_allow_html=True)
+    
     # 事前分布の設定
     st.sidebar.subheader('モデル設定')
     prior_dist = st.sidebar.selectbox(
