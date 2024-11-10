@@ -54,11 +54,6 @@ if st.session_state.authenticated:
     with col2:
         end_date = st.date_input("終了日", value=datetime.today())
     
-    # URL入力欄の追加
-    st.sidebar.subheader("関連URL（必要であれば）")
-    url_link = st.sidebar.text_area("関連URLを記載してください", placeholder="URLを記載してください")
-    st.sidebar.markdown("-----------------")
-    
     # 訪問者数とCV数の入力
     st.sidebar.subheader('データ入力')
     
