@@ -7,6 +7,10 @@ import pymc as pm
 import arviz as az
 from datetime import datetime, timedelta
 import os
+import logging
+
+logger = logging.getLogger('pymc')
+logger.setLevel(logging.DEBUG)
 
 # スタイル設定
 plt.style.use('seaborn')
