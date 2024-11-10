@@ -181,14 +181,14 @@ if st.session_state.authenticated:
         <div style="display: inline-block; text-align: left; width: 55%;">※月間換算 = （増加差分）/（テスト日数）×（30日）</div>
     </div>
     """, unsafe_allow_html=True)
-    col9, col10, col11 = st.columns(3)
-    with col9:
-        st.metric("A: CVR", f"{cvr_a:.2%}")
-    with col10:
-        st.metric("B: CVR", f"{cvr_b:.2%}")
-    with col11:
-        relative_diff = (cvr_b - cvr_a) / cvr_a
-        st.metric("相対的な差", f"{relative_diff:.2%}")
+    # col9, col10, col11 = st.columns(3)
+    # with col9:
+    #     st.metric("A: CVR", f"{cvr_a:.2%}")
+    # with col10:
+    #     st.metric("B: CVR", f"{cvr_b:.2%}")
+    # with col11:
+    #     relative_diff = (cvr_b - cvr_a) / cvr_a
+    #     st.metric("相対的な差", f"{relative_diff:.2%}")
     
     # ベイジアンモデルの構築と推論
     def run_bayesian_model():
