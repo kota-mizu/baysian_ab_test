@@ -1,10 +1,12 @@
 setuptools
-streamlit
-numpy
 matplotlib
 seaborn
 pandas
 scipy
 japanize-matplotlib
 pymc==5.8.1
+numpy==1.23.2
 arviz==0.16.1
+streamlit==1.26.0
+plotly==5.17.0
+pydantic==2.3.0
