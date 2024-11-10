@@ -59,10 +59,13 @@ if st.session_state.authenticated:
     with col3:
         visitors_a = st.number_input('Aの訪問者数', value=1000, min_value=1)
         conversion_a = st.number_input('AのCV数', value=50, min_value=0)
+        cvr_a = conversion_a / visitors_a
+        st.sidebar.markdown(f'AのCVR :  **{"{:.1%}".format(cvr_a)}**')
     with col4:
         visitors_b = st.number_input('Bの訪問者数', value=1000, min_value=1)
         conversion_b = st.number_input('BのCV数', value=55, min_value=0)
-
+        cvr_b = conversion_b / visitors_b
+        st.sidebar.markdown(f'BのCVR :  **{"{:.1%}".format(cvr_b)}**')
     # 事前分布の設定
     st.sidebar.subheader('モデル設定')
     prior_dist = st.sidebar.selectbox(
