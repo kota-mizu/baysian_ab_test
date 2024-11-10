@@ -6,3 +6,5 @@ seaborn
 pandas
 scipy
 japanize-matplotlib
+pymc
+arviz
