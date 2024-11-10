@@ -95,6 +95,12 @@ if st.session_state.authenticated:
             mu_prior = st.number_input('μ (平均)', value=0.0)
         with col8:
             sigma_prior = st.number_input('σ (標準偏差)', value=1.0, min_value=0.1)
+    elif prior_dist == '一様分布(Uniform)':
+        col7, col8 = st.sidebar.columns(2)
+        with col7:
+            lower_bound = st.number_input('下限値', value=0.0)
+        with col8:
+            upper_bound = st.number_input('上限値', value=1.0, min_value=lower_bound)
     
     # MCMCの設定
     st.sidebar.subheader('MCMCの設定')
@@ -106,6 +112,75 @@ if st.session_state.authenticated:
     st.header('1. テスト概要')
     
     # 基本統計量の表示
+
+    # 期間差分を計算（テスト日数を求める）
+    days_difference = (end_date - start_date).days
+    
+    # テーブルのスタイルを調整
+    st.markdown(rf'''
+        <style>
+        table {{
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+        }}
+        th, td {{
+            padding: 10px;
+            text-align: center;
+            border: 1px solid black;
+            font-size: 18px;
+        }}
+        th:nth-child(1), td:nth-child(1) {{
+            width: 15%;
+        }}
+        th:nth-child(2), td:nth-child(2),
+        th:nth-child(3), td:nth-child(3),
+        th:nth-child(4), td:nth-child(4) {{
+            width: 15%;
+        }}
+        th:nth-child(5), th:nth-child(6), th:nth-child(7) {{
+            width: 13%;
+            font-size: 14px;
+        }}
+        td:nth-child(5), td:nth-child(6), td:nth-child(7) {{
+            width: 13%;
+        }}
+        </style>
+    
+        <table>
+          <tr>
+            <th>対象</th>
+            <th>訪問者数</th>
+            <th>CV数</th>
+            <th>CVR</th>
+            <th>CVR改善率（B/A）</th>
+            <th>増加差分</th>
+            <th>月間換算</th>
+          </tr>
+          <tr>
+            <td>A</td>
+            <td>{visitors_a}</td>
+            <td>{conversion_a}</td>
+            <td>{"{:.1%}".format(cvr_a)}</td>
+            <td rowspan="2">{"{:.1%}".format(cvr_b / cvr_a)}</td>
+            <td rowspan="2">{"{:.1f}".format((cvr_b - cvr_a) * (visitors_a + visitors_b))}</td>
+            <td rowspan="2">{"{:.1f}".format((cvr_b - cvr_a) * (visitors_a + visitors_b) / days_difference * 30) if days_difference > 0 else "N/A"}</td>
+          </tr>
+          <tr>
+            <td>B</td>
+            <td>{visitors_b}</td>
+            <td>{conversion_b}</td>
+            <td>{"{:.1%}".format(cvr_b)}</td>
+          </tr>
+        </table>
+        ''', unsafe_allow_html=True)
+    
+    st.markdown("""
+    <div style="font-size: 14px; text-align: right;">
+        <div style="display: inline-block; text-align: left; width: 55%;">※増加差分 = （BのCVR - AのCVR）×（A+Bの総訪問者数）</div><br>
+        <div style="display: inline-block; text-align: left; width: 55%;">※月間換算 = （増加差分）/（テスト日数）×（30日）</div>
+    </div>
+    """, unsafe_allow_html=True)
     col9, col10, col11 = st.columns(3)
     with col9:
         st.metric("A: CVR", f"{cvr_a:.2%}")
@@ -120,8 +195,8 @@ if st.session_state.authenticated:
         with pm.Model() as model:
             # 事前分布の設定
             if prior_dist == '一様分布(Uniform)':
-                p_a = pm.Uniform('p_a', 0, 1)
-                p_b = pm.Uniform('p_b', 0, 1)
+                p_a = pm.Uniform('p_a', lower=lower_bound, upper=upper_bound)
+                p_b = pm.Uniform('p_b', lower=lower_bound, upper=upper_bound)
             elif prior_dist == 'ベータ分布(Beta)':
                 p_a = pm.Beta('p_a', alpha=alpha_prior, beta=beta_prior)
                 p_b = pm.Beta('p_b', alpha=alpha_prior, beta=beta_prior)
@@ -141,6 +216,7 @@ if st.session_state.authenticated:
             trace = pm.sample(n_draws, tune=n_tune, chains=n_chains, return_inferencedata=True)
             
         return trace, model
+
     
     st.header('2. ベイジアン分析結果')
     
