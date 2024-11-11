@@ -47,15 +47,12 @@ if st.session_state.authenticated:
     st.sidebar.header("テスト設定")
     
     # 期間設定
-    st.sidebar.subheader("期間設定")
+    st.sidebar.subheader("取得データの入力")
     col1, col2 = st.sidebar.columns(2)
     with col1:
         start_date = st.date_input("開始日", value=datetime.today() - timedelta(days=7))
     with col2:
         end_date = st.date_input("終了日", value=datetime.today())
-    
-    # 訪問者数とCV数の入力
-    st.sidebar.subheader('データ入力')
     
     # Aのデータ入力
     col3, col4 = st.sidebar.columns(2)
@@ -74,7 +71,9 @@ if st.session_state.authenticated:
         conversion_b = st.number_input('BのCV数', value=50)
     cvr_b = conversion_b / visitors_b
     st.sidebar.markdown(f'BのCVR :  **{"{:.1%}".format(cvr_b)}**')
-    
+
+ 　 st.sidebar.markdown("-----------------")  # ここで横線を追加    
+
     # 事前分布の設定
     st.sidebar.subheader('モデル設定')
     prior_dist = st.sidebar.selectbox(
@@ -101,7 +100,9 @@ if st.session_state.authenticated:
             lower_bound = st.number_input('下限値', value=0.0)
         with col8:
             upper_bound = st.number_input('上限値', value=1.0, min_value=lower_bound)
-    
+            
+  　st.sidebar.markdown("-----------------")  # ここで横線を追加
+
     # MCMCの設定
     st.sidebar.subheader('MCMCの設定')
     n_draws = st.sidebar.slider('サンプル数', 1000, 10000, 2000, step=1000)
@@ -241,7 +242,7 @@ if st.session_state.authenticated:
     # トレースプロット
     st.subheader('トレースプロット')
     fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
-    pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes)
+    pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False)
     st.pyplot(fig3)
     
     # 統計的まとめ
