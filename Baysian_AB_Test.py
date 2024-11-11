@@ -217,7 +217,7 @@ if st.session_state.authenticated:
     # Streamlit UI部分
     st.subheader('2. ベイジアン分析結果')
     
-    # ボタンのスタイルを追加
+    # ボタンをポップにするためのスタイルを追加
     st.markdown("""
         <style>
             .pop-button {
@@ -238,8 +238,10 @@ if st.session_state.authenticated:
         </style>
         """, unsafe_allow_html=True)
 
-    # モデルの計算を開始するボタン
-    if st.markdown('<button class="pop-button">モデルの計算を始める</button>', unsafe_allow_html=True):
+    # モデルの計算を開始するボタンを作成
+    button_clicked = st.button('モデルの計算を始める')
+    
+    if button_clicked:
         with st.spinner('モデルを計算中...'):
             trace, model = run_bayesian_model()
     
