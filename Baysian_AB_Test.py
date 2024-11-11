@@ -232,7 +232,6 @@ if st.session_state.authenticated:
             }
     
             .pop-button:hover {
-                background-color: #5471a9; /* ホバー時に濃いピンク */
                 box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.2);
                 transform: translateY(-2px); /* 上に少し浮かせる */
             }
