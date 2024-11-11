@@ -221,7 +221,7 @@ if st.session_state.authenticated:
     st.markdown("""
         <style>
             .pop-button {
-                background-color: #5cc8ed; /* ピンク色 */
+                background-color: #5471a9; /* 紺色 */
                 color: white;
                 font-size: 15px;
                 padding: 10px 30px;
