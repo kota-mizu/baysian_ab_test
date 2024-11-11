@@ -51,30 +51,54 @@ if st.session_state.authenticated:
     with col2:
         end_date = st.date_input("終了日", value=datetime.today())
     
-    # Aのデータ入力
-    col3, col4 = st.sidebar.columns(2)
-    with col3:
-        visitors_a = st.number_input('Aの訪問者数', value=1000)
-    with col4:
-        conversion_a = st.number_input('AのCV数', value=50)
-    cvr_a = conversion_a / visitors_a
-    st.sidebar.markdown(f'AのCVR :  **{"{:.1%}".format(cvr_a)}**')
+    # データ入力方式の選択
+    input_type = st.sidebar.radio(
+        "データ入力方式",
+        ['訪問者数とCV数', '観測期間と発生率']
+    )
     
-    # Bのデータ入力
-    col5, col6 = st.sidebar.columns(2)
-    with col5:
-        visitors_b = st.number_input('Bの訪問者数', value=1000)
-    with col6:
-        conversion_b = st.number_input('BのCV数', value=50)
-    cvr_b = conversion_b / visitors_b
-    st.sidebar.markdown(f'BのCVR :  **{"{:.1%}".format(cvr_b)}**')
-    st.sidebar.markdown("-----------------")  # ここで横線を追加    
+    if input_type == '訪問者数とCV数':
+        # 従来の入力方式
+        col3, col4 = st.sidebar.columns(2)
+        with col3:
+            visitors_a = st.number_input('Aの訪問者数', value=1000)
+        with col4:
+            conversion_a = st.number_input('AのCV数', value=50)
+        cvr_a = conversion_a / visitors_a
+        st.sidebar.markdown(f'AのCVR :  **{"{:.1%}".format(cvr_a)}**')
+        
+        col5, col6 = st.sidebar.columns(2)
+        with col5:
+            visitors_b = st.number_input('Bの訪問者数', value=1000)
+        with col6:
+            conversion_b = st.number_input('BのCV数', value=50)
+        cvr_b = conversion_b / visitors_b
+        st.sidebar.markdown(f'BのCVR :  **{"{:.1%}".format(cvr_b)}**')
+    else:
+        # ポアソン分布用の入力方式
+        col3, col4 = st.sidebar.columns(2)
+        with col3:
+            time_period_a = st.number_input('A観測期間(時間)', value=168.0)  # 1週間=168時間
+        with col4:
+            events_a = st.number_input('Aのイベント数', value=50)
+        rate_a = events_a / time_period_a
+        st.sidebar.markdown(f'Aの発生率(events/hour) :  **{"{:.3f}".format(rate_a)}**')
+        
+        col5, col6 = st.sidebar.columns(2)
+        with col5:
+            time_period_b = st.number_input('B観測期間(時間)', value=168.0)
+        with col6:
+            events_b = st.number_input('Bのイベント数', value=50)
+        rate_b = events_b / time_period_b
+        st.sidebar.markdown(f'Bの発生率(events/hour) :  **{"{:.3f}".format(rate_b)}**')
+
+    st.sidebar.markdown("-----------------")
 
     # 事前分布の設定
     st.sidebar.subheader('モデル設定')
     prior_dist = st.sidebar.selectbox(
         '事前分布の選択',
-        ['一様分布(Uniform)', 'ベータ分布(Beta)', '正規分布(Normal)']
+        ['一様分布(Uniform)', 'ベータ分布(Beta)', '正規分布(Normal)', 'ガンマ分布(Gamma)']
     )
     
     # 事前分布のパラメータ設定
@@ -90,13 +114,20 @@ if st.session_state.authenticated:
             mu_prior = st.number_input('μ (平均)', value=0.0)
         with col8:
             sigma_prior = st.number_input('σ (標準偏差)', value=1.0, min_value=0.1)
+    elif prior_dist == 'ガンマ分布(Gamma)':
+        col7, col8 = st.sidebar.columns(2)
+        with col7:
+            alpha_gamma = st.number_input('α (形状パラメータ)', value=1.0, min_value=0.1)
+        with col8:
+            beta_gamma = st.number_input('β (レートパラメータ)', value=1.0, min_value=0.1)
     elif prior_dist == '一様分布(Uniform)':
         col7, col8 = st.sidebar.columns(2)
         with col7:
             lower_bound = st.number_input('下限値', value=0.0)
         with col8:
             upper_bound = st.number_input('上限値', value=1.0, min_value=lower_bound)
-    st.sidebar.markdown("-----------------")  # ここで横線を追加
+    
+    st.sidebar.markdown("-----------------")
 
     # MCMCの設定
     st.sidebar.subheader('MCMCの設定')
@@ -107,113 +138,141 @@ if st.session_state.authenticated:
         'target_accept (デフォルト: 0.8)',
         [0.8, 0.90, 0.95, 0.98, 0.99, 0.995]
     )
-    
+
     # メインコンテンツ
     st.subheader('1. テスト概要')
     
-    # 基本統計量の表示
+    # データ表示を入力方式に応じて変更
+    if input_type == '訪問者数とCV数':
+        # 期間差分を計算（テスト日数を求める）
+        days_difference = (end_date - start_date).days
+        
+        st.markdown(rf'''
+            <style>
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: fixed;
+            }}
+            th, td {{
+                padding: 10px;
+                text-align: center;
+                border: 1px solid black;
+                font-size: 18px;
+            }}
+            </style>
+        
+            <table>
+              <tr>
+                <th>対象</th>
+                <th>訪問者数</th>
+                <th>CV数</th>
+                <th>CVR</th>
+                <th>CVR改善率（B/A）</th>
+                <th>増加差分</th>
+                <th>月間換算</th>
+              </tr>
+              <tr>
+                <td>A</td>
+                <td>{visitors_a}</td>
+                <td>{conversion_a}</td>
+                <td>{"{:.1%}".format(cvr_a)}</td>
+                <td rowspan="2">{"{:.1%}".format(cvr_b / cvr_a)}</td>
+                <td rowspan="2">{"{:.1f}".format((cvr_b - cvr_a) * (visitors_a + visitors_b))}</td>
+                <td rowspan="2">{"{:.1f}".format((cvr_b - cvr_a) * (visitors_a + visitors_b) / days_difference * 30) if days_difference > 0 else "N/A"}</td>
+              </tr>
+              <tr>
+                <td>B</td>
+                <td>{visitors_b}</td>
+                <td>{conversion_b}</td>
+                <td>{"{:.1%}".format(cvr_b)}</td>
+              </tr>
+            </table>
+            ''', unsafe_allow_html=True)
+    else:
+        st.markdown(rf'''
+            <style>
+            table {{
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: fixed;
+            }}
+            th, td {{
+                padding: 10px;
+                text-align: center;
+                border: 1px solid black;
+                font-size: 18px;
+            }}
+            </style>
+        
+            <table>
+              <tr>
+                <th>対象</th>
+                <th>観測期間(時間)</th>
+                <th>イベント数</th>
+                <th>発生率(events/hour)</th>
+                <th>改善率（B/A）</th>
+              </tr>
+              <tr>
+                <td>A</td>
+                <td>{time_period_a}</td>
+                <td>{events_a}</td>
+                <td>{"{:.3f}".format(rate_a)}</td>
+                <td rowspan="2">{"{:.1%}".format(rate_b / rate_a)}</td>
+              </tr>
+              <tr>
+                <td>B</td>
+                <td>{time_period_b}</td>
+                <td>{events_b}</td>
+                <td>{"{:.3f}".format(rate_b)}</td>
+              </tr>
+            </table>
+            ''', unsafe_allow_html=True)
 
-    # 期間差分を計算（テスト日数を求める）
-    days_difference = (end_date - start_date).days
-    
-    # テーブルのスタイルを調整
-    st.markdown(rf'''
-        <style>
-        table {{
-            width: 100%;
-            border-collapse: collapse;
-            table-layout: fixed;
-        }}
-        th, td {{
-            padding: 10px;
-            text-align: center;
-            border: 1px solid black;
-            font-size: 18px;
-        }}
-        th:nth-child(1), td:nth-child(1) {{
-            width: 15%;
-        }}
-        th:nth-child(2), td:nth-child(2),
-        th:nth-child(3), td:nth-child(3),
-        th:nth-child(4), td:nth-child(4) {{
-            width: 15%;
-        }}
-        th:nth-child(5), th:nth-child(6), th:nth-child(7) {{
-            width: 13%;
-            font-size: 14px;
-        }}
-        td:nth-child(5), td:nth-child(6), td:nth-child(7) {{
-            width: 13%;
-        }}
-        </style>
-    
-        <table>
-          <tr>
-            <th>対象</th>
-            <th>訪問者数</th>
-            <th>CV数</th>
-            <th>CVR</th>
-            <th>CVR改善率（B/A）</th>
-            <th>増加差分</th>
-            <th>月間換算</th>
-          </tr>
-          <tr>
-            <td>A</td>
-            <td>{visitors_a}</td>
-            <td>{conversion_a}</td>
-            <td>{"{:.1%}".format(cvr_a)}</td>
-            <td rowspan="2">{"{:.1%}".format(cvr_b / cvr_a)}</td>
-            <td rowspan="2">{"{:.1f}".format((cvr_b - cvr_a) * (visitors_a + visitors_b))}</td>
-            <td rowspan="2">{"{:.1f}".format((cvr_b - cvr_a) * (visitors_a + visitors_b) / days_difference * 30) if days_difference > 0 else "N/A"}</td>
-          </tr>
-          <tr>
-            <td>B</td>
-            <td>{visitors_b}</td>
-            <td>{conversion_b}</td>
-            <td>{"{:.1%}".format(cvr_b)}</td>
-          </tr>
-        </table>
-        ''', unsafe_allow_html=True)
-    
-    st.markdown("""
-    <div style="font-size: 14px; text-align: right;">
-        <div style="display: inline-block; text-align: left; width: 40%;">※増加差分 = （BのCVR - AのCVR）×（A+Bの総訪問者数）</div><br>
-        <div style="display: inline-block; text-align: left; width: 40%;">※月間換算 = （増加差分）/（テスト日数）×（30日）</div>
-    </div>
-    """, unsafe_allow_html=True)
-    # col9, col10, col11 = st.columns(3)
-    # with col9:
-    #     st.metric("A: CVR", f"{cvr_a:.2%}")
-    # with col10:
-    #     st.metric("B: CVR", f"{cvr_b:.2%}")
-    # with col11:
-    #     relative_diff = (cvr_b - cvr_a) / cvr_a
-    #     st.metric("相対的な差", f"{relative_diff:.2%}")
-    
     # ベイジアンモデルの構築と推論
     def run_bayesian_model():
         with pm.Model() as model:
-            # 事前分布の設定
-            if prior_dist == '一様分布(Uniform)':
-                p_a = pm.Uniform('p_a', lower=lower_bound, upper=upper_bound)
-                p_b = pm.Uniform('p_b', lower=lower_bound, upper=upper_bound)
-            elif prior_dist == 'ベータ分布(Beta)':
-                p_a = pm.Beta('p_a', alpha=alpha_prior, beta=beta_prior)
-                p_b = pm.Beta('p_b', alpha=alpha_prior, beta=beta_prior)
-            else:  # 正規分布
-                p_a = pm.TruncatedNormal('p_a', mu=mu_prior, sigma=sigma_prior, lower=0, upper=1)
-                p_b = pm.TruncatedNormal('p_b', mu=mu_prior, sigma=sigma_prior, lower=0, upper=1)
+            if input_type == '訪問者数とCV数':
+                # 従来の二項分布モデル
+                if prior_dist == '一様分布(Uniform)':
+                    p_a = pm.Uniform('p_a', lower=lower_bound, upper=upper_bound)
+                    p_b = pm.Uniform('p_b', lower=lower_bound, upper=upper_bound)
+                elif prior_dist == 'ベータ分布(Beta)':
+                    p_a = pm.Beta('p_a', alpha=alpha_prior, beta=beta_prior)
+                    p_b = pm.Beta('p_b', alpha=alpha_prior, beta=beta_prior)
+                elif prior_dist == '正規分布(Normal)':
+                    p_a = pm.TruncatedNormal('p_a', mu=mu_prior, sigma=sigma_prior, lower=0, upper=1)
+                    p_b = pm.TruncatedNormal('p_b', mu=mu_prior, sigma=sigma_prior, lower=0, upper=1)
+                
+                # 尤度
+                obs_a = pm.Binomial('obs_a', n=visitors_a, p=p_a, observed=conversion_a)
+                obs_b = pm.Binomial('obs_b', n=visitors_b, p=p_b, observed=conversion_b)
+                
+                # 差とリフト
+                diff = pm.Deterministic('diff', p_b - p_a)
+                lift = pm.Deterministic('lift', (p_b - p_a) / p_a)
             
-            # 尤度
-            obs_a = pm.Binomial('obs_a', n=visitors_a, p=p_a, observed=conversion_a)
-            obs_b = pm.Binomial('obs_b', n=visitors_b, p=p_b, observed=conversion_b)
-            
-            # 差とリフト
-            diff = pm.Deterministic('diff', p_b - p_a)
-            lift = pm.Deterministic('lift', (p_b - p_a) / p_a)
+            else:
+                # ポアソン-ガンマモデル
+                if prior_dist == 'ガンマ分布(Gamma)':
+                    lambda_a = pm.Gamma('lambda_a', alpha=alpha_gamma, beta=beta_gamma)
+                    lambda_b = pm.Gamma('lambda_b', alpha=alpha_gamma, beta=beta_gamma)
+                else:
+                    # ガンマ分布以外の場合はデフォルトのガンマ事前分布を使用
+                    lambda_a = pm.Gamma('lambda_a', alpha=1.0, beta=1.0)
+                    lambda_b = pm.Gamma('lambda_b', alpha=1.0, beta=1.0)
+                
+                # 尤度
+                obs_a = pm.Poisson('obs_a', mu=lambda_a * time_period_a, observed=events_a)
+                obs_b = pm.Poisson('obs_b', mu=lambda_b * time_period_b, observed=events_b)
+                
+                # 差とリフト
+                diff = pm.Deterministic('diff', lambda_b - lambda_a)
+                lift = pm.Deterministic('lift', (lambda_b - lambda_a) / lambda_a)
             
             # サンプリング
-            trace = pm.sample(n_draws, tune=n_tune, chains=n_chains, return_inferencedata=True, random_seed = 42, target_accept=target_accept)
+            trace = pm.sample(n_draws, tune=n_tune, chains=n_chains, return_inferencedata=True, 
+                            random_seed=42, target_accept=target_accept)
             
         return trace, model
     
