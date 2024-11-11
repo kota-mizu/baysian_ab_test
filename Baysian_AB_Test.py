@@ -242,11 +242,15 @@ if st.session_state.authenticated:
     # トレースプロット
     st.markdown('<h4>トレースプロット</h4>', unsafe_allow_html=True)
 
-    fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
-    pm.plot_trace(trace, compact=False)
-    plt.tight_layout()  # レイアウト調整
-    # st.pyplot(fig3)
-
+    # プロット作成
+    fig, axes = plt.subplots(figsize=(10, 6))  # サイズを指定
+    pm.plot_trace(trace, compact=False, axes=axes)
+    
+    # レイアウト調整
+    plt.tight_layout()
+    
+    # Streamlitに表示
+    st.pyplot(fig)
 
     
     # 統計的まとめ
