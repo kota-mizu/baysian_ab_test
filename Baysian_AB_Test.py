@@ -220,27 +220,27 @@ if st.session_state.authenticated:
         trace, model = run_bayesian_model()
     
     # 確率モデルの構造を可視化
-    st.markdown('<h3>確率モデル構造</h3>', unsafe_allow_html=True)
+    st.markdown('<h4>確率モデル構造</h4>', unsafe_allow_html=True)
     g = pm.model_to_graphviz(model)
     st.graphviz_chart(g)
     
     # 変換率の事後分布
     col12, col13 = st.columns(2)
     with col12:
-        st.markdown('<h3>変換率の事後分布</h3>', unsafe_allow_html=True)
+        st.markdown('<h4>変換率の事後分布</h4>', unsafe_allow_html=True)
         fig1, ax1 = plt.subplots(figsize=(10, 6))
         az.plot_posterior(trace, var_names=['p_a', 'p_b'], ax=ax1)
         plt.title('ConversionRate Posterior Distributions')
         st.pyplot(fig1)
     with col13:
-        st.markdown('<h3>差分の事後分布</h3>', unsafe_allow_html=True)
+        st.markdown('<h4>差分の事後分布</h4>', unsafe_allow_html=True)
         fig2, ax2 = plt.subplots(figsize=(10, 6))
         az.plot_posterior(trace, var_names=['diff'], ax=ax2)
         plt.title('Difference (B - A) Posterior Distribution')
         st.pyplot(fig2)
     
     # トレースプロット
-    st.markdown('<h3>トレースプロット</h3>', unsafe_allow_html=True)
+    st.markdown('<h4>トレースプロット</h4>', unsafe_allow_html=True)
 
     fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
     pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False)
@@ -257,7 +257,7 @@ if st.session_state.authenticated:
     with col15:
         st.metric("期待されるリフト", f"{expected_lift:.1%}", help="BがAに対して期待される相対的な改善率")
     
-    st.markdown('<h3>パラメータの要約統計量</h3>', unsafe_allow_html=True)
+    st.markdown('<h4>パラメータの要約統計量</h4>', unsafe_allow_html=True)
 
     summary = az.summary(trace, var_names=['p_a', 'p_b', 'diff', 'lift'])
     st.dataframe(summary)
