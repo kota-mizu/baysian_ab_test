@@ -103,6 +103,10 @@ if st.session_state.authenticated:
     n_draws = st.sidebar.slider('取得するサンプル数', 1000, 10000, 2000, step=1000)
     n_chains = st.sidebar.slider('乱数系列の数', 2, 4, 2)
     n_tune = st.sidebar.slider('捨てるサンプル数', 500, 2000, 1000, step=500)
+    target_accept = st.sidebar.selectbox(
+        'target_accept (デフォルト: 0.8)',
+        [0.8, 0.90, 0.95, 0.98, 0.99, 0.995]
+    )
     
     # メインコンテンツ
     st.subheader('1. テスト概要')
@@ -209,7 +213,7 @@ if st.session_state.authenticated:
             lift = pm.Deterministic('lift', (p_b - p_a) / p_a)
             
             # サンプリング
-            trace = pm.sample(n_draws, tune=n_tune, chains=n_chains, return_inferencedata=True, random_seed = 42)
+            trace = pm.sample(n_draws, tune=n_tune, chains=n_chains, return_inferencedata=True, random_seed = 42, target_accept=target_accept)
             
         return trace, model
     
