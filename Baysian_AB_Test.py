@@ -244,7 +244,9 @@ if st.session_state.authenticated:
 
     fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
     pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False)
+    plt.tight_layout()  # レイアウト調整
     st.pyplot(fig3)
+
     
     # 統計的まとめ
     st.subheader('3. 統計的まとめ')
