@@ -71,8 +71,7 @@ if st.session_state.authenticated:
         conversion_b = st.number_input('BのCV数', value=50)
     cvr_b = conversion_b / visitors_b
     st.sidebar.markdown(f'BのCVR :  **{"{:.1%}".format(cvr_b)}**')
-
- 　 st.sidebar.markdown("-----------------")  # ここで横線を追加    
+    st.sidebar.markdown("-----------------")  # ここで横線を追加    
 
     # 事前分布の設定
     st.sidebar.subheader('モデル設定')
