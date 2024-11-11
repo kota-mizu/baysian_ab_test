@@ -105,7 +105,7 @@ if st.session_state.authenticated:
     n_tune = st.sidebar.slider('チューニングステップ数', 500, 2000, 1000, step=500)
     
     # メインコンテンツ
-    st.header('1. テスト概要')
+    st.subheader('1. テスト概要')
     
     # 基本統計量の表示
 
@@ -214,39 +214,40 @@ if st.session_state.authenticated:
         return trace, model
     
     # Streamlit UI部分
-    st.header('2. ベイジアン分析結果')
+    st.subheader('2. ベイジアン分析結果')
     
     with st.spinner('モデルを計算中...'):
         trace, model = run_bayesian_model()
     
     # 確率モデルの構造を可視化
-    st.subheader('確率モデル構造')
+    st.markdown('<h3>確率モデル構造</h3>', unsafe_allow_html=True)
     g = pm.model_to_graphviz(model)
     st.graphviz_chart(g)
     
     # 変換率の事後分布
     col12, col13 = st.columns(2)
     with col12:
-        st.subheader('変換率の事後分布')
+        st.markdown('<h3>変換率の事後分布</h3>', unsafe_allow_html=True)
         fig1, ax1 = plt.subplots(figsize=(10, 6))
         az.plot_posterior(trace, var_names=['p_a', 'p_b'], ax=ax1)
         plt.title('ConversionRate Posterior Distributions')
         st.pyplot(fig1)
     with col13:
-        st.subheader('差分の事後分布')
+        st.markdown('<h3>差分の事後分布</h3>', unsafe_allow_html=True)
         fig2, ax2 = plt.subplots(figsize=(10, 6))
         az.plot_posterior(trace, var_names=['diff'], ax=ax2)
         plt.title('Difference (B - A) Posterior Distribution')
         st.pyplot(fig2)
     
     # トレースプロット
-    st.subheader('トレースプロット')
+    st.markdown('<h3>トレースプロット</h3>', unsafe_allow_html=True)
+
     fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
     pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False)
     st.pyplot(fig3)
     
     # 統計的まとめ
-    st.header('3. 統計的まとめ')
+    st.subheader('3. 統計的まとめ')
     prob_b_better = (trace.posterior['p_b'] > trace.posterior['p_a']).mean().item()
     expected_lift = trace.posterior['lift'].mean().item()
     
@@ -256,7 +257,8 @@ if st.session_state.authenticated:
     with col15:
         st.metric("期待されるリフト", f"{expected_lift:.1%}", help="BがAに対して期待される相対的な改善率")
     
-    st.subheader('パラメータの要約統計量')
+    st.markdown('<h3>パラメータの要約統計量</h3>', unsafe_allow_html=True)
+
     summary = az.summary(trace, var_names=['p_a', 'p_b', 'diff', 'lift'])
     st.dataframe(summary)
 
