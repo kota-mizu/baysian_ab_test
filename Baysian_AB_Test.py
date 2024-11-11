@@ -43,9 +43,6 @@ if not st.session_state.authenticated:
 if st.session_state.authenticated:
     st.title('ベイジアンA/Bテスト分析ツール')
     
-    # サイドバー設定
-    st.sidebar.header("テスト設定")
-    
     # 期間設定
     st.sidebar.subheader("取得データの入力")
     col1, col2 = st.sidebar.columns(2)
@@ -215,14 +212,19 @@ if st.session_state.authenticated:
             trace = pm.sample(n_draws, tune=n_tune, chains=n_chains, return_inferencedata=True)
             
         return trace, model
-
     
+    # Streamlit UI部分
     st.header('2. ベイジアン分析結果')
     
     with st.spinner('モデルを計算中...'):
         trace, model = run_bayesian_model()
     
-    # 結果の可視化
+    # 確率モデルの構造を可視化
+    st.subheader('確率モデル構造')
+    g = pm.model_to_graphviz(model)
+    st.graphviz_chart(g)
+    
+    # 変換率の事後分布
     col12, col13 = st.columns(2)
     with col12:
         st.subheader('変換率の事後分布')
@@ -247,6 +249,7 @@ if st.session_state.authenticated:
     st.header('3. 統計的まとめ')
     prob_b_better = (trace.posterior['p_b'] > trace.posterior['p_a']).mean().item()
     expected_lift = trace.posterior['lift'].mean().item()
+    
     col14, col15 = st.columns(2)
     with col14:
         st.metric("Bが優れている確率", f"{prob_b_better:.1%}", help="BのCVRがAのCVRを上回る確率")
