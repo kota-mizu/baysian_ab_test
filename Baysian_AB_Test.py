@@ -242,7 +242,7 @@ if st.session_state.authenticated:
     st.markdown('<h4>トレースプロット</h4>', unsafe_allow_html=True)
 
     fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
-    pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False, color=['blue', 'orange'])
+    pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False)
     plt.tight_layout()  # レイアウト調整
     st.pyplot(fig3)
 
