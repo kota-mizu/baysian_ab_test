@@ -279,27 +279,6 @@ if st.session_state.authenticated:
     
     # Streamlit UI部分
     st.subheader('2. ベイジアン分析結果')
-    
-    # ボタンをポップにするためのスタイルを追加
-    st.markdown("""
-        <style>
-            .pop-button {
-                background-color: #5471a9; /* 紺色 */
-                color: white;
-                font-size: 15px;
-                padding: 10px 30px;
-                border-radius: 15px;
-                border: none;
-                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
-                transition: all 0.3s ease;
-            }
-    
-            .pop-button:hover {
-                box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.2);
-                transform: translateY(-2px); /* 上に少し浮かせる */
-            }
-        </style>
-        """, unsafe_allow_html=True)
 
     # モデルの計算を開始するボタンを作成
     button_clicked = st.button('モデルの計算を始める')
@@ -314,45 +293,91 @@ if st.session_state.authenticated:
         g = pm.model_to_graphviz(model)
         st.graphviz_chart(g)
         
-        # 変換率の事後分布
+        # 事後分布の可視化
         col12, col13 = st.columns(2)
-        with col12:
-            st.markdown('<h4>変換率の事後分布</h4>', unsafe_allow_html=True)
-            fig1, ax1 = plt.subplots(figsize=(10, 6))
-            az.plot_posterior(trace, var_names=['p_a', 'p_b'], ax=ax1)
-            plt.title('ConversionRate Posterior Distributions')
-            st.pyplot(fig1)
-        with col13:
-            st.markdown('<h4>差分の事後分布</h4>', unsafe_allow_html=True)
-            fig2, ax2 = plt.subplots(figsize=(10, 6))
-            az.plot_posterior(trace, var_names=['diff'], ax=ax2)
-            xx, yy = ax2.get_lines()[0].get_data()
-            ax2.fill_between(xx[xx<0], yy[xx<0])
-            plt.title('Difference (B - A) Posterior Distribution')
-            st.pyplot(fig2)
-    
-        # トレースプロット
-        st.markdown('<h4>トレースプロット</h4>', unsafe_allow_html=True)
-        fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
-        pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False)
-        plt.tight_layout()  # レイアウト調整
-        st.pyplot(fig3)
-    
-        # 統計的まとめ
-        st.subheader('3. 統計的まとめ')
-        prob_b_better = (trace.posterior['p_b'] > trace.posterior['p_a']).mean().item()
-        expected_lift = trace.posterior['lift'].mean().item()
         
-        col14, col15 = st.columns(2)
-        with col14:
-            st.metric("Bが優れている確率", f"{prob_b_better:.1%}", help="BのCVRがAのCVRを上回る確率")
-        with col15:
-            st.metric("期待されるリフト", f"{expected_lift:.1%}", help="BがAに対して期待される相対的な改善率")
+        if input_type == '訪問者数とCV数':
+            # CVRベースの分析
+            with col12:
+                st.markdown('<h4>変換率の事後分布</h4>', unsafe_allow_html=True)
+                fig1, ax1 = plt.subplots(figsize=(10, 6))
+                az.plot_posterior(trace, var_names=['p_a', 'p_b'], ax=ax1)
+                plt.title('Conversion Rate Posterior Distributions')
+                st.pyplot(fig1)
+            
+            with col13:
+                st.markdown('<h4>差分の事後分布</h4>', unsafe_allow_html=True)
+                fig2, ax2 = plt.subplots(figsize=(10, 6))
+                az.plot_posterior(trace, var_names=['diff'], ax=ax2)
+                xx, yy = ax2.get_lines()[0].get_data()
+                ax2.fill_between(xx[xx<0], yy[xx<0])
+                plt.title('Difference (B - A) Posterior Distribution')
+                st.pyplot(fig2)
+            
+            # トレースプロット
+            st.markdown('<h4>トレースプロット</h4>', unsafe_allow_html=True)
+            fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
+            pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False)
+            plt.tight_layout()
+            st.pyplot(fig3)
+            
+            # 統計的まとめ
+            st.subheader('3. 統計的まとめ')
+            prob_b_better = (trace.posterior['p_b'] > trace.posterior['p_a']).mean().item()
+            expected_lift = trace.posterior['lift'].mean().item()
+            
+            col14, col15 = st.columns(2)
+            with col14:
+                st.metric("Bが優れている確率", f"{prob_b_better:.1%}", 
+                         help="BのCVRがAのCVRを上回る確率")
+            with col15:
+                st.metric("期待されるリフト", f"{expected_lift:.1%}", 
+                         help="BがAに対して期待される相対的な改善率")
+            
+            summary = az.summary(trace, var_names=['p_a', 'p_b', 'diff', 'lift'])
+            
+        else:
+            # イベント発生率ベースの分析
+            with col12:
+                st.markdown('<h4>イベント発生率の事後分布</h4>', unsafe_allow_html=True)
+                fig1, ax1 = plt.subplots(figsize=(10, 6))
+                az.plot_posterior(trace, var_names=['lambda_a', 'lambda_b'], ax=ax1)
+                plt.title('Event Rate Posterior Distributions')
+                st.pyplot(fig1)
+            
+            with col13:
+                st.markdown('<h4>差分の事後分布</h4>', unsafe_allow_html=True)
+                fig2, ax2 = plt.subplots(figsize=(10, 6))
+                az.plot_posterior(trace, var_names=['diff'], ax=ax2)
+                xx, yy = ax2.get_lines()[0].get_data()
+                ax2.fill_between(xx[xx<0], yy[xx<0])
+                plt.title('Difference (B - A) Posterior Distribution')
+                st.pyplot(fig2)
+            
+            # トレースプロット
+            st.markdown('<h4>トレースプロット</h4>', unsafe_allow_html=True)
+            fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
+            pm.plot_trace(trace, var_names=['lambda_a', 'lambda_b'], axes=axes, compact=False)
+            plt.tight_layout()
+            st.pyplot(fig3)
+            
+            # 統計的まとめ
+            st.subheader('3. 統計的まとめ')
+            prob_b_better = (trace.posterior['lambda_b'] > trace.posterior['lambda_a']).mean().item()
+            expected_lift = trace.posterior['lift'].mean().item()
+            
+            col14, col15 = st.columns(2)
+            with col14:
+                st.metric("Bが優れている確率", f"{prob_b_better:.1%}", 
+                         help="Bの発生率がAの発生率を上回る確率")
+            with col15:
+                st.metric("期待されるリフト", f"{expected_lift:.1%}", 
+                         help="BがAに対して期待される相対的な改善率")
+            
+            summary = az.summary(trace, var_names=['lambda_a', 'lambda_b', 'diff', 'lift'])
         
         st.markdown('<h4>パラメータの要約統計量</h4>', unsafe_allow_html=True)
-        summary = az.summary(trace, var_names=['p_a', 'p_b', 'diff', 'lift'])
         st.dataframe(summary)
-
 
 
 
