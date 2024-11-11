@@ -100,9 +100,9 @@ if st.session_state.authenticated:
 
     # MCMCの設定
     st.sidebar.subheader('MCMCの設定')
-    n_draws = st.sidebar.slider('サンプル数', 1000, 10000, 2000, step=1000)
-    n_chains = st.sidebar.slider('チェーン数', 2, 4, 2)
-    n_tune = st.sidebar.slider('チューニングステップ数', 500, 2000, 1000, step=500)
+    n_draws = st.sidebar.slider('取得するサンプル数', 1000, 10000, 2000, step=1000)
+    n_chains = st.sidebar.slider('乱数系列の数', 2, 4, 2)
+    n_tune = st.sidebar.slider('捨てるサンプル数', 500, 2000, 1000, step=500)
     
     # メインコンテンツ
     st.subheader('1. テスト概要')
@@ -209,62 +209,62 @@ if st.session_state.authenticated:
             lift = pm.Deterministic('lift', (p_b - p_a) / p_a)
             
             # サンプリング
-            trace = pm.sample(n_draws, tune=n_tune, chains=n_chains, return_inferencedata=True)
+            trace = pm.sample(n_draws, tune=n_tune, chains=n_chains, return_inferencedata=True, random_seed = 42)
             
         return trace, model
     
     # Streamlit UI部分
     st.subheader('2. ベイジアン分析結果')
     
-    with st.spinner('モデルを計算中...'):
-        trace, model = run_bayesian_model()
+    # モデルの計算を開始するボタンを表示
+    if st.button('モデルの計算を始める'):
+        with st.spinner('モデルを計算中...'):
+            trace, model = run_bayesian_model()
     
-    # 確率モデルの構造を可視化
-    st.markdown('<h4>確率モデル構造</h4>', unsafe_allow_html=True)
-    g = pm.model_to_graphviz(model)
-    st.graphviz_chart(g)
+        # 確率モデルの構造を可視化
+        st.markdown('<h4>確率モデル構造</h4>', unsafe_allow_html=True)
+        g = pm.model_to_graphviz(model)
+        st.graphviz_chart(g)
+        
+        # 変換率の事後分布
+        col12, col13 = st.columns(2)
+        with col12:
+            st.markdown('<h4>変換率の事後分布</h4>', unsafe_allow_html=True)
+            fig1, ax1 = plt.subplots(figsize=(10, 6))
+            az.plot_posterior(trace, var_names=['p_a', 'p_b'], ax=ax1)
+            plt.title('ConversionRate Posterior Distributions')
+            st.pyplot(fig1)
+        with col13:
+            st.markdown('<h4>差分の事後分布</h4>', unsafe_allow_html=True)
+            fig2, ax2 = plt.subplots(figsize=(10, 6))
+            az.plot_posterior(trace, var_names=['diff'], ax=ax2)
+            xx, yy = ax2.get_lines()[0].get_data()
+            ax2.fill_between(xx[xx<0], yy[xx<0])
+            plt.title('Difference (B - A) Posterior Distribution')
+            st.pyplot(fig2)
     
-    # 変換率の事後分布
-    col12, col13 = st.columns(2)
-    with col12:
-        st.markdown('<h4>変換率の事後分布</h4>', unsafe_allow_html=True)
-        fig1, ax1 = plt.subplots(figsize=(10, 6))
-        az.plot_posterior(trace, var_names=['p_a', 'p_b'], ax=ax1)
-        plt.title('ConversionRate Posterior Distributions')
-        st.pyplot(fig1)
-    with col13:
-        st.markdown('<h4>差分の事後分布</h4>', unsafe_allow_html=True)
-        fig2, ax2 = plt.subplots(figsize=(10, 6))
-        az.plot_posterior(trace, var_names=['diff'], ax=ax2)
-        xx, yy = ax2.get_lines()[0].get_data()
-        ax2.fill_between(xx[xx<0], yy[xx<0]);
-        plt.title('Difference (B - A) Posterior Distribution')
-        st.pyplot(fig2)
+        # トレースプロット
+        st.markdown('<h4>トレースプロット</h4>', unsafe_allow_html=True)
+        fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
+        pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False)
+        plt.tight_layout()  # レイアウト調整
+        st.pyplot(fig3)
+    
+        # 統計的まとめ
+        st.subheader('3. 統計的まとめ')
+        prob_b_better = (trace.posterior['p_b'] > trace.posterior['p_a']).mean().item()
+        expected_lift = trace.posterior['lift'].mean().item()
+        
+        col14, col15 = st.columns(2)
+        with col14:
+            st.metric("Bが優れている確率", f"{prob_b_better:.1%}", help="BのCVRがAのCVRを上回る確率")
+        with col15:
+            st.metric("期待されるリフト", f"{expected_lift:.1%}", help="BがAに対して期待される相対的な改善率")
+        
+        st.markdown('<h4>パラメータの要約統計量</h4>', unsafe_allow_html=True)
+        summary = az.summary(trace, var_names=['p_a', 'p_b', 'diff', 'lift'])
+        st.dataframe(summary)
 
-    #トレースプロット
-    st.markdown('<h4>トレースプロット</h4>', unsafe_allow_html=True)
-
-    fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
-    pm.plot_trace(trace, var_names=['p_a', 'p_b'], axes=axes, compact=False)
-    plt.tight_layout()  # レイアウト調整
-    st.pyplot(fig3)
-
-    
-    # 統計的まとめ
-    st.subheader('3. 統計的まとめ')
-    prob_b_better = (trace.posterior['p_b'] > trace.posterior['p_a']).mean().item()
-    expected_lift = trace.posterior['lift'].mean().item()
-    
-    col14, col15 = st.columns(2)
-    with col14:
-        st.metric("Bが優れている確率", f"{prob_b_better:.1%}", help="BのCVRがAのCVRを上回る確率")
-    with col15:
-        st.metric("期待されるリフト", f"{expected_lift:.1%}", help="BがAに対して期待される相対的な改善率")
-    
-    st.markdown('<h4>パラメータの要約統計量</h4>', unsafe_allow_html=True)
-
-    summary = az.summary(trace, var_names=['p_a', 'p_b', 'diff', 'lift'])
-    st.dataframe(summary)
 
 
 
