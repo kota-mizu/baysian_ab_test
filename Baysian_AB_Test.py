@@ -78,7 +78,7 @@ if st.session_state.authenticated:
         # ポアソン分布用の入力方式
         col3, col4 = st.sidebar.columns(2)
         with col3:
-            time_period_a = st.number_input('観測期間(時間)', value=168.0)  # 1週間=168時間
+            time_period_a = st.number_input('A観測期間(時間)', value=168.0)  # 1週間=168時間
         with col4:
             events_a = st.number_input('Aのイベント数', value=50)
         rate_a = events_a / time_period_a
@@ -86,7 +86,7 @@ if st.session_state.authenticated:
         
         col5, col6 = st.sidebar.columns(2)
         with col5:
-            time_period_b = st.number_input('観測期間(時間)', value=168.0)
+            time_period_b = st.number_input('B観測期間(時間)', value=168.0)
         with col6:
             events_b = st.number_input('Bのイベント数', value=50)
         rate_b = events_b / time_period_b
