@@ -99,8 +99,7 @@ if st.session_state.authenticated:
             lower_bound = st.number_input('下限値', value=0.0)
         with col8:
             upper_bound = st.number_input('上限値', value=1.0, min_value=lower_bound)
-            
-  　st.sidebar.markdown("-----------------")  # ここで横線を追加
+    st.sidebar.markdown("-----------------")  # ここで横線を追加
 
     # MCMCの設定
     st.sidebar.subheader('MCMCの設定')
