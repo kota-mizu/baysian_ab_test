@@ -213,14 +213,38 @@ if st.session_state.authenticated:
             
         return trace, model
     
+    
     # Streamlit UI部分
     st.subheader('2. ベイジアン分析結果')
     
-    # モデルの計算を開始するボタンを表示
-    if st.button('モデルの計算を始める'):
+    # ボタンのスタイルを追加
+    st.markdown("""
+        <style>
+            .pop-button {
+                background-color: #FF4081; /* ピンク色 */
+                color: white;
+                font-size: 18px;
+                padding: 10px 30px;
+                border-radius: 15px;
+                border: none;
+                box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+                transition: all 0.3s ease;
+            }
+    
+            .pop-button:hover {
+                background-color: #F50057; /* ホバー時に濃いピンク */
+                box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.2);
+                transform: translateY(-2px); /* 上に少し浮かせる */
+            }
+        </style>
+        """, unsafe_allow_html=True)
+
+    # モデルの計算を開始するボタン
+    if st.markdown('<button class="pop-button">モデルの計算を始める</button>', unsafe_allow_html=True):
         with st.spinner('モデルを計算中...'):
             trace, model = run_bayesian_model()
     
+        # ここから先は先ほどと同様の処理
         # 確率モデルの構造を可視化
         st.markdown('<h4>確率モデル構造</h4>', unsafe_allow_html=True)
         g = pm.model_to_graphviz(model)
