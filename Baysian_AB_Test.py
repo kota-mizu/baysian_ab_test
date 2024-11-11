@@ -236,9 +236,12 @@ if st.session_state.authenticated:
         st.markdown('<h4>差分の事後分布</h4>', unsafe_allow_html=True)
         fig2, ax2 = plt.subplots(figsize=(10, 6))
         az.plot_posterior(trace, var_names=['diff'], ax=ax2)
+        xx, yy = ax2.get_lines()[0].get_data()
+        ax2.fill_between(xx[xx<0], yy[xx<0]);
         plt.title('Difference (B - A) Posterior Distribution')
         st.pyplot(fig2)
-    
+
+    #トレースプロット
     st.markdown('<h4>トレースプロット</h4>', unsafe_allow_html=True)
 
     fig3, axes = plt.subplots(2, 2, figsize=(15, 10))
