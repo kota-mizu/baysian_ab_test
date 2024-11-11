@@ -221,9 +221,9 @@ if st.session_state.authenticated:
     st.markdown("""
         <style>
             .pop-button {
-                background-color: #FF4081; /* ピンク色 */
+                background-color: #5cc8ed; /* ピンク色 */
                 color: white;
-                font-size: 18px;
+                font-size: 15px;
                 padding: 10px 30px;
                 border-radius: 15px;
                 border: none;
@@ -232,7 +232,7 @@ if st.session_state.authenticated:
             }
     
             .pop-button:hover {
-                background-color: #F50057; /* ホバー時に濃いピンク */
+                background-color: #5471a9; /* ホバー時に濃いピンク */
                 box-shadow: 0px 6px 20px rgba(0, 0, 0, 0.2);
                 transform: translateY(-2px); /* 上に少し浮かせる */
             }
